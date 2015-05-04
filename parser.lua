@@ -81,9 +81,17 @@ function parse.declaration()
 	print("Parsing Declaration")
 	parse.expect('identifier')
 	parse.expect('equal')
-	-- TODO  declare funcs
-	parse.expression()
-	parse.expect('semicolon')
+	local token = parse.showNext()
+	if token.kind == 'function' then
+		parse.next()
+		parse.expect('leftpar')
+		parse.expect('rightpar')
+		parse.expect('leftcurly')
+		parse.stmt()
+		parse.expect('rightcurly')
+	else
+		parse.expression()
+	end
 end
 
 function parse.stIf()
@@ -133,6 +141,7 @@ function parse.stmt()
 	if token.kind == 'var' then
 		parse.next()
 		parse.declaration()
+		parse.expect('semicolon')
 
 	-- IF
 	elseif token.kind == 'if' then

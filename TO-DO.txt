@@ -1,0 +1,25 @@
+DONE
+
+assign
+if
+declare identifier = expression;
+declare function   var x = function(){};
+
+
+TODO
+
+declare function	function x (){}
+
+function call with arguments
+function declaration with parameters
+
+while, for, etc...
+
+Taking a second look at expressions complexity
+add function call as a possible expression?? done??
+
+
+
+BUGS
+
+Currently reading x = -2; as operatior + number instead of negative number
