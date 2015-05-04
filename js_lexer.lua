@@ -63,7 +63,7 @@ context:define('number', flt + int)
 -- Operators (matched after comments because of conflict with slash/division).
 context:define('operator', P'>>=' + '<<=' + '--' + '>>' + '>=' + '/=' + '=='+ '===' + '<='
     + '+=' + '<<' + '*=' + '++' + '&&' + '|=' + '||' + '!=' + '&=' + '-='
-    + '^=' + '%=' + '->' + S',*%+&-~/^]|.[>!?:<')
+    + '^=' + '%=' + '->' + S'*%+&-~/^]|.[>!?:<')
 
 context:define('equal','=')
 context:define('addassign',"+=")
@@ -77,6 +77,7 @@ context:define('leftpar','(')
 context:define('rightpar',')')
 context:define('leftcurly','{')
 context:define('rightcurly','}')
+context:define('coma',',')
 
 
 -- Define an `error' token kind that consumes one character and enables

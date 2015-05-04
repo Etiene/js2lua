@@ -6,7 +6,10 @@ if(x > 1){
 	// an empty block is accepted JS code
 
 
-	var test = function(){};
+	var test = function(hey,ho,lets,go){
+
+		x = 3;
+	};
 
 
 }else {

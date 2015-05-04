@@ -4,19 +4,22 @@ assign
 if
 declare identifier = expression;
 declare function   var x = function(){};
+vars and function calls on expressions
 
+function call with arguments
+function declaration with parameters
 
 TODO
 
 declare function	function x (){}
 
-function call with arguments
-function declaration with parameters
+
 
 while, for, etc...
 
 Taking a second look at expressions complexity
-add function call as a possible expression?? done??
+
+call to non declared things
 
 
 

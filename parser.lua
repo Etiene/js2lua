@@ -34,11 +34,25 @@ function parse.showNext()
 	return gen_table[cursor+1]
 end
 
+function parse.identList(n)
+	n = n or 0
+	local token = parse.showNext()
+	if token.kind ~= 'rightpar' then
+		n = n + 1
+		parse.expect('identifier')
+		token = parse.showNext()
+		if token.kind == 'coma' then
+			parse.next() -- accept
+			parse.identList(n+1)
+		end
+	end
+	return n
+end
 
 function parse.expect(tokenKind, msg)
 	local token = parse.next()
 	if not token then
-		msg = (msg or '').."Parsing error. Missing }."
+		msg = (msg or '').."Parsing error. Missing '}'."
 		error(msg)
 	elseif token.kind ~= tokenKind then
 		msg = (msg or '').."Parsing error on "..token.line..":"..token.char..". Expecting "..tokenKind.." but got "..token.kind.."."
@@ -49,6 +63,8 @@ end
 
 function parse.call()
 	print('Parsing Function Call')
+	parse.expect('leftpar')
+	parse.identList()
 	parse.expect('rightpar')
 end
 
@@ -63,39 +79,42 @@ end
 function parse.expression()
 	print("Parsing Expression")
 	local token = parse.showNext()
-	if token.kind == 'number' then
-		parse.expect('number')
+	if token.kind == 'number' then		-- NUMBER
+		parse.next() -- accept
 		auxExp()
 	else
-		parse.expect('identifier','Expression error. ')
+		parse.expect('identifier','Expression error. ') -- IDENTIFIER
 		local token = parse.showNext()
-		if token.kind == 'leftpar' then
+		if token.kind == 'leftpar' then  -- FUNCTION CALL
 			parse.call()
 		else
-			auxExp()
+			auxExp()					-- NORMAL VAR ACCESS
 		end
 	end	
 end
 
 function parse.declaration()
 	print("Parsing Declaration")
+	parse.expect('var')				-- var x =
 	parse.expect('identifier')
 	parse.expect('equal')
 	local token = parse.showNext()
-	if token.kind == 'function' then
+	if token.kind == 'function' then -- FUNCTION DECLARATION
 		parse.next()
 		parse.expect('leftpar')
+		parse.identList()
 		parse.expect('rightpar')
 		parse.expect('leftcurly')
 		parse.stmt()
 		parse.expect('rightcurly')
 	else
-		parse.expression()
+		parse.expression() -- NORMAL DECLARATION
 	end
 end
 
 function parse.stIf()
 	print("Parsing If")
+	parse.expect('if')		-- if(exp){ stmt* }[else [stIf]* | {}]?
 	parse.expect('leftpar')
 	parse.expression()
 	parse.expect('rightpar')
@@ -108,7 +127,6 @@ function parse.stIf()
 		parse.next()
 		token = parse.showNext()
 		if token.kind == 'if' then
-			parse.next()
 			parse.stIf() -- will parse infinite else ifs :)
 		else
 			parse.expect('leftcurly')
@@ -119,10 +137,10 @@ function parse.stIf()
 end
 
 function parse.assign()
-	print("Parsing Assignment")
-	-- TODO
+	print("Parsing Assignment") -- x = exp or x++
+	
 	local token = parse.showNext()
-	if util.in_table({'=','+=','-=','*=','/=','%='},token.text) then
+	if util.in_table({'=','+=','-=','*=','/=','%='},token.text) then 
 		parse.next()
 		parse.expression()
 
@@ -139,22 +157,20 @@ function parse.stmt()
 	local token = parse.showNext()
 	-- DECLARATION
 	if token.kind == 'var' then
-		parse.next()
 		parse.declaration()
 		parse.expect('semicolon')
 
 	-- IF
 	elseif token.kind == 'if' then
-		parse.next()
 		parse.stIf()
 
 	elseif token.kind == 'identifier' then
-		parse.next()
-		local token = parse.showNext()
+		parse.next() -- accept
+
+		token = parse.showNext()
 
 		-- FUNCTION CALL
 		if token.kind == 'leftpar' then
-			parse.next()
 			parse.call()
 			parse.expect('semicolon')
 
