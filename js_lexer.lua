@@ -30,11 +30,12 @@ local escape = '\\' * ( newline -- escape sequence
                       + ('x' * #X * X^-2))
 
 context:define('keyword', context:keywords [[
-  break do instanceof typeof case else new catch finally return void continue for switch while debugger function this with default throw delete in try
+  break do instanceof typeof case new catch finally return void continue for switch while debugger function this with default throw delete in try
 ]])
 
 context:define('var','var')
 context:define('if','if')
+context:define('else','else')
 
 -- Pattern definitions start here.
 context:define('whitespace' , S'\r\n\f\t\v '^1)
@@ -63,7 +64,13 @@ context:define('operator', P'>>=' + '<<=' + '--' + '>>' + '>=' + '/=' + '=='+ '=
     + '+=' + '<<' + '*=' + '++' + '&&' + '|=' + '||' + '!=' + '&=' + '-='
     + '^=' + '%=' + '->' + S',*%+&-~/^]|.[>!?:<')
 
-context:define('assign','=')
+context:define('equal','=')
+context:define('addassign',"+=")
+context:define('subtractassign', "-=")
+context:define('multiplyassign',"*=")
+context:define('moduloassign', "%=")
+context:define('shiftleftassign', "<<=")
+context:define('shiftrightassign', ">>=")
 context:define('semicolon',';')
 context:define('leftpar','(')
 context:define('rightpar',')')

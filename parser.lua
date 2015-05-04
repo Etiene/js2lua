@@ -20,7 +20,7 @@ local gen_table = {}
 for kind, text, lnum, cnum in js.gmatch(src) do
 	print(string.format('%s: %q (%i:%i)', kind, text, lnum, cnum))
 	if kind ~= 'comment' and kind ~= 'whitespace' then
-		table.insert(gen_table,{kind = kind, text = text, line = lnum})
+		table.insert(gen_table,{kind = kind, text = text, line = lnum, char = cnum})
 	end
 end
 
@@ -35,15 +35,20 @@ function parse.showNext()
 end
 
 
-function parse.expect(tokenKind)
+function parse.expect(tokenKind, msg)
 	local token = parse.next()
-	if token.kind ~= tokenKind then
-		error("Parsing error on line "..token.line..". Expecting "..tokenKind.." but got "..token.kind..".")
+	if not token then
+		msg = (msg or '').."Parsing error. Missing }."
+		error(msg)
+	elseif token.kind ~= tokenKind then
+		msg = (msg or '').."Parsing error on "..token.line..":"..token.char..". Expecting "..tokenKind.." but got "..token.kind.."."
+		error(msg)
 	end
 	return token
 end
 
 function parse.call()
+	print('Parsing Function Call')
 	parse.expect('rightpar')
 end
 
@@ -59,25 +64,23 @@ function parse.expression()
 	print("Parsing Expression")
 	local token = parse.showNext()
 	if token.kind == 'number' then
-		parse.next()
+		parse.expect('number')
 		auxExp()
-	elseif token.kind == 'identifier' then
-		parse.next()
+	else
+		parse.expect('identifier','Expression error. ')
 		local token = parse.showNext()
 		if token.kind == 'leftpar' then
 			parse.call()
 		else
 			auxExp()
 		end
-	else
-		error("Parsing error on line "..token.line..".")
 	end	
 end
 
 function parse.declaration()
 	print("Parsing Declaration")
 	parse.expect('identifier')
-	parse.expect('assign')
+	parse.expect('equal')
 	-- TODO  declare funcs
 	parse.expression()
 	parse.expect('semicolon')
@@ -89,11 +92,38 @@ function parse.stIf()
 	parse.expression()
 	parse.expect('rightpar')
 	parse.expect('leftcurly')
-	-- TODO end of if statement
+	parse.stmt()
+	parse.expect('rightcurly')
+
+	local token = parse.showNext()
+	if token.kind == 'else' then
+		parse.next()
+		token = parse.showNext()
+		if token.kind == 'if' then
+			parse.next()
+			parse.stIf() -- will parse infinite else ifs :)
+		else
+			parse.expect('leftcurly')
+			parse.stmt()
+			parse.expect('rightcurly')
+		end
+	end
 end
 
 function parse.assign()
+	print("Parsing Assignment")
 	-- TODO
+	local token = parse.showNext()
+	if util.in_table({'=','+=','-=','*=','/=','%='},token.text) then
+		parse.next()
+		parse.expression()
+
+	elseif util.in_table({'++','--'},token.text) then
+		parse.next()
+
+	else
+		error("Parsing error on "..token.line..":"..token.char..". Expected operator, got "..token.kind)
+	end
 end
 
 function parse.stmt()
@@ -115,18 +145,25 @@ function parse.stmt()
 
 		-- FUNCTION CALL
 		if token.kind == 'leftpar' then
+			parse.next()
 			parse.call()
+			parse.expect('semicolon')
 
 		-- ASSIGNMENT
 		else
 			parse.assign()
+			parse.expect('semicolon')
 		end
-	else -- TODO: while, for, etc
-		error("Parsing error on line "..token.line..". Expected ?, got "..token.kind)
+
+	 -- TODO: while, for, etc
+	elseif token.kind ~= 'rightcurly' then
+		error("Parsing error on "..token.line..":"..token.char..". Expected ?, got "..token.kind)
 	end
-	
+
+	if parse.showNext() and (parse.showNext()).kind ~= 'rightcurly' then
+		parse.stmt()
+	end
 end
 
-while parse.showNext() do
-	parse.stmt()
-end
+
+parse.stmt()
