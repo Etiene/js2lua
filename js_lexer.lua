@@ -30,10 +30,11 @@ local escape = '\\' * ( newline -- escape sequence
                       + ('x' * #X * X^-2))
 
 context:define('keyword', context:keywords [[
-  auto break case char const continue default do double else enum extern float
-  for goto if int long register return short signed sizeof static struct switch
-  typedef union unsigned void volatile while
+  break do instanceof typeof case else new catch finally return void continue for switch while debugger function this with default throw delete in try
 ]])
+
+context:define('var','var')
+context:define('if','if')
 
 -- Pattern definitions start here.
 context:define('whitespace' , S'\r\n\f\t\v '^1)
@@ -58,9 +59,17 @@ local flt = ((D^1 * '.' * D^0
 context:define('number', flt + int)
 
 -- Operators (matched after comments because of conflict with slash/division).
-context:define('operator', P'>>=' + '<<=' + '--' + '>>' + '>=' + '/=' + '==' + '<='
+context:define('operator', P'>>=' + '<<=' + '--' + '>>' + '>=' + '/=' + '=='+ '===' + '<='
     + '+=' + '<<' + '*=' + '++' + '&&' + '|=' + '||' + '!=' + '&=' + '-='
-    + '^=' + '%=' + '->' + S',)*%+&(-~/^]{}|.[>!?:=<;')
+    + '^=' + '%=' + '->' + S',*%+&-~/^]|.[>!?:<')
+
+context:define('assign','=')
+context:define('semicolon',';')
+context:define('leftpar','(')
+context:define('rightpar',')')
+context:define('leftcurly','{')
+context:define('rightcurly','}')
+
 
 -- Define an `error' token kind that consumes one character and enables
 -- the lexer to resume as a last resort for dealing with unknown input.
