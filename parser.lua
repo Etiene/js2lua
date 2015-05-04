@@ -34,6 +34,20 @@ function parse.showNext()
 	return gen_table[cursor+1]
 end
 
+
+
+function parse.expect(tokenKind, msg)
+	local token = parse.next()
+	if not token then
+		msg = (msg or '').."Parsing error. Missing '}'."
+		error(msg)
+	elseif token.kind ~= tokenKind then
+		msg = (msg or '').."Parsing error on "..token.line..":"..token.char..". Expecting "..tokenKind.." but got "..token.kind.."."
+		error(msg)
+	end
+	return token
+end
+
 function parse.identList(n)
 	n = n or 0
 	local token = parse.showNext()
@@ -47,18 +61,6 @@ function parse.identList(n)
 		end
 	end
 	return n
-end
-
-function parse.expect(tokenKind, msg)
-	local token = parse.next()
-	if not token then
-		msg = (msg or '').."Parsing error. Missing '}'."
-		error(msg)
-	elseif token.kind ~= tokenKind then
-		msg = (msg or '').."Parsing error on "..token.line..":"..token.char..". Expecting "..tokenKind.." but got "..token.kind.."."
-		error(msg)
-	end
-	return token
 end
 
 function parse.call()
@@ -93,20 +95,28 @@ function parse.expression()
 	end	
 end
 
+function parse.functionDeclaration(declaration_type) -- 1: var x = function(){}; 2: function x(){}
+	print("Parsing Function Declaration")
+	parse.expect('function')
+	if declaration_type == 2 then
+		parse.expect('identifier') -- If type 1 this was declared before and thus not needed
+	end
+	parse.expect('leftpar')
+	parse.identList()
+	parse.expect('rightpar')
+	parse.expect('leftcurly')
+	parse.stmt()
+	parse.expect('rightcurly')
+end
+
 function parse.declaration()
 	print("Parsing Declaration")
 	parse.expect('var')				-- var x =
 	parse.expect('identifier')
 	parse.expect('equal')
 	local token = parse.showNext()
-	if token.kind == 'function' then -- FUNCTION DECLARATION
-		parse.next()
-		parse.expect('leftpar')
-		parse.identList()
-		parse.expect('rightpar')
-		parse.expect('leftcurly')
-		parse.stmt()
-		parse.expect('rightcurly')
+	if token.kind == 'function' then -- FUNCTION DECLARATION TYPE 1
+		parse.functionDeclaration(1)
 	else
 		parse.expression() -- NORMAL DECLARATION
 	end
@@ -135,6 +145,7 @@ function parse.stIf()
 		end
 	end
 end
+
 
 function parse.assign()
 	print("Parsing Assignment") -- x = exp or x++
@@ -179,6 +190,10 @@ function parse.stmt()
 			parse.assign()
 			parse.expect('semicolon')
 		end
+
+	-- FUNCTION DECLARATION TYPE 2 -> function x(){}
+	elseif token.kind == 'function' then
+		parse.functionDeclaration(2)
 
 	 -- TODO: while, for, etc
 	elseif token.kind ~= 'rightcurly' then

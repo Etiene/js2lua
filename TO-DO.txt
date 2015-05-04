@@ -1,28 +1,30 @@
 DONE
 
 assign
-if
+if else if else
 declare identifier = expression;
 declare function   var x = function(){};
 vars and function calls on expressions
-
 function call with arguments
 function declaration with parameters
-
-TODO
-
 declare function	function x (){}
 
 
+DOING / NEXT
 
+Optional semicolons
+
+
+
+TODO
+
+error on call to non declared things
 while, for, etc...
-
 Taking a second look at expressions complexity
-
-call to non declared things
 
 
 
 BUGS
 
-Currently reading x = -2; as operatior + number instead of negative number
+Currently reading x = -2; as operator + number instead of negative number
+
