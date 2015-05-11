@@ -34,7 +34,12 @@ function parse.showNext()
 	return gen_table[cursor+1]
 end
 
-
+function parse.maybeExpect(tokenKind)
+	local token = parse.showNext()
+	if token and tokenKind == token.kind then
+		parse.next()
+	end
+end
 
 function parse.expect(tokenKind, msg)
 	local token = parse.next()
@@ -169,11 +174,12 @@ function parse.stmt()
 	-- DECLARATION
 	if token.kind == 'var' then
 		parse.declaration()
-		parse.expect('semicolon')
+		parse.maybeExpect('semicolon')
 
 	-- IF
 	elseif token.kind == 'if' then
 		parse.stIf()
+		parse.maybeExpect('semicolon')
 
 	elseif token.kind == 'identifier' then
 		parse.next() -- accept
@@ -183,17 +189,18 @@ function parse.stmt()
 		-- FUNCTION CALL
 		if token.kind == 'leftpar' then
 			parse.call()
-			parse.expect('semicolon')
-
+			
 		-- ASSIGNMENT
 		else
 			parse.assign()
-			parse.expect('semicolon')
 		end
+
+		parse.maybeExpect('semicolon')
 
 	-- FUNCTION DECLARATION TYPE 2 -> function x(){}
 	elseif token.kind == 'function' then
 		parse.functionDeclaration(2)
+		parse.maybeExpect('semicolon')
 
 	 -- TODO: while, for, etc
 	elseif token.kind ~= 'rightcurly' then

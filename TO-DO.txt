@@ -8,11 +8,10 @@ vars and function calls on expressions
 function call with arguments
 function declaration with parameters
 declare function	function x (){}
-
+Optional semicolons
 
 DOING / NEXT
 
-Optional semicolons
 
 
 
@@ -21,6 +20,7 @@ TODO
 error on call to non declared things
 while, for, etc...
 Taking a second look at expressions complexity
+normal js functions
 
 
 
