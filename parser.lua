@@ -17,6 +17,8 @@ local current
 local gen_table = {}
 --local tree = {}
 
+local declaration_scope = {}
+
 for kind, text, lnum, cnum in js.gmatch(src) do
 	print(string.format('%s: %q (%i:%i)', kind, text, lnum, cnum))
 	if kind ~= 'comment' and kind ~= 'whitespace' then
@@ -187,6 +189,17 @@ function parse.assign()
 	end
 end
 
+function parse._while()
+	print("Parsing While") 
+	parse.expect('while')
+	parse.expect('leftpar')
+	parse.expression()
+	parse.expect('rightpar')
+	parse.expect('leftcurly')
+	parse.stmt()
+	parse.expect('rightcurly')
+end
+
 function parse.stmt()
 	print("Parsing Statement")
 	local token = parse.showNext()
@@ -221,7 +234,12 @@ function parse.stmt()
 		parse.functionDeclaration(2)
 		parse.maybeExpect('semicolon')
 
-	 -- TODO: while, for, etc
+	-- WHILE
+	elseif token.kind == 'while' then
+		parse._while()
+		parse.maybeExpect('semicolon')
+
+	 -- TODO: for, etc
 	elseif token.kind ~= 'rightcurly' then
 		error("Parsing error on "..token.line..":"..token.char..". Expected ?, got "..token.kind)
 	end
