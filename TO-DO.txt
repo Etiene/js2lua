@@ -9,15 +9,18 @@ function call with arguments
 function declaration with parameters
 declare function	function x (){}
 Optional semicolons
+numbers and strings sent as arguments
 
 DOING / NEXT
 
-
-
+fix end of if
 
 TODO
 
 error on call to non declared things
+function declaration order
+scope
+expect arguments
 while, for, etc...
 Taking a second look at expressions complexity
 normal js functions

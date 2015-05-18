@@ -42,27 +42,46 @@ function parse.maybeExpect(tokenKind)
 end
 
 function parse.expect(tokenKind, msg)
+	msg = msg or ''
 	local token = parse.next()
 	if not token then
-		msg = (msg or '').."Parsing error. Missing '}'."
+		msg = msg.."Parsing error. Missing '}'."
 		error(msg)
-	elseif token.kind ~= tokenKind then
-		msg = (msg or '').."Parsing error on "..token.line..":"..token.char..". Expecting "..tokenKind.." but got "..token.kind.."."
-		error(msg)
+	elseif type(tokenKind) == 'string' then
+		if token.kind ~= tokenKind then
+			msg = msg.."Parsing error on "..token.line..":"..token.char..". Expecting "..tokenKind.." but got "..token.kind.."."
+			error(msg)
+		end
+	elseif type(tokenKind) == 'table' then
+		local match = false
+		for _,expected in pairs(tokenKind) do
+			if token.kind == expected then
+				match = true
+			end
+		end
+		if not match then
+			msg = msg.."Parsing error on "..token.line..":"..token.char..". Expecting "..table.unpack(tokenKind).." but got "..token.kind.."."
+			error(msg)
+		end
 	end
 	return token
 end
 
-function parse.identList(n)
+function parse.argList(n,onlyIdentifiers)
 	n = n or 0
 	local token = parse.showNext()
 	if token.kind ~= 'rightpar' then
 		n = n + 1
-		parse.expect('identifier')
+		if onlyIdentifiers then
+			parse.expect('identifier')
+		else
+			parse.expect({'identifier','number','string'})
+		end
+
 		token = parse.showNext()
 		if token.kind == 'coma' then
 			parse.next() -- accept
-			parse.identList(n+1)
+			parse.argList(n+1,onlyIdentifiers)
 		end
 	end
 	return n
@@ -71,7 +90,7 @@ end
 function parse.call()
 	print('Parsing Function Call')
 	parse.expect('leftpar')
-	parse.identList()
+	parse.argList()
 	parse.expect('rightpar')
 end
 
@@ -107,7 +126,7 @@ function parse.functionDeclaration(declaration_type) -- 1: var x = function(){};
 		parse.expect('identifier') -- If type 1 this was declared before and thus not needed
 	end
 	parse.expect('leftpar')
-	parse.identList()
+	parse.argList()
 	parse.expect('rightpar')
 	parse.expect('leftcurly')
 	parse.stmt()
