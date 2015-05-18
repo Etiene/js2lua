@@ -157,7 +157,7 @@ function parse.stIf()
 	parse.expect('rightcurly')
 
 	local token = parse.showNext()
-	if token.kind == 'else' then
+	if token and token.kind == 'else' then
 		parse.next()
 		token = parse.showNext()
 		if token.kind == 'if' then

@@ -10,10 +10,11 @@ function declaration with parameters
 declare function	function x (){}
 Optional semicolons
 numbers and strings sent as arguments
+fix end of if
 
 DOING / NEXT
 
-fix end of if
+
 
 TODO
 
