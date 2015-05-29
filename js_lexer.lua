@@ -30,7 +30,7 @@ local escape = '\\' * ( newline -- escape sequence
                       + ('x' * #X * X^-2))
 
 context:define('keyword', context:keywords [[
-  break do instanceof typeof case new catch finally return void continue for switch debugger this with default throw delete in try
+  break do instanceof typeof case new catch finally void continue for switch debugger this with default throw delete in try
 ]])
 
 context:define('var','var')
@@ -38,6 +38,7 @@ context:define('if','if')
 context:define('else','else')
 context:define('function','function')
 context:define('while','while')
+context:define('return','return')
 
 -- Pattern definitions start here.
 context:define('whitespace' , S'\r\n\f\t\v '^1)

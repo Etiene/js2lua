@@ -3,6 +3,7 @@ local parse = {}
 require 'lxsh'
 local js = require 'js_lexer'
 local util = require 'util'
+local ast = require 'ast'
 
 local file = io.open(arg[1],"r")
 local src = file:read("*a")
@@ -12,13 +13,9 @@ io.close(file)
 local cursor = 0
 local current
 
---local generated_code = ""
-
 local gen_table = {}
---local tree = {}
 
-local declaration_scope = {}
-
+-- Gets the scan results, removes comments and white spaces and adds the token in a stream
 for kind, text, lnum, cnum in js.gmatch(src) do
 	print(string.format('%s: %q (%i:%i)', kind, text, lnum, cnum))
 	if kind ~= 'comment' and kind ~= 'whitespace' then
@@ -26,16 +23,21 @@ for kind, text, lnum, cnum in js.gmatch(src) do
 	end
 end
 
+
+-- Advance in the stream
 function parse.next()
 	cursor = cursor+1
 	current = gen_table[cursor]
 	return current
 end
 
+-- Peek
 function parse.showNext()
 	return gen_table[cursor+1]
 end
 
+
+-- Used for optional semicolons
 function parse.maybeExpect(tokenKind)
 	local token = parse.showNext()
 	if token and tokenKind == token.kind then
@@ -43,6 +45,7 @@ function parse.maybeExpect(tokenKind)
 	end
 end
 
+-- Predict
 function parse.expect(tokenKind, msg)
 	msg = msg or ''
 	local token = parse.next()
@@ -69,6 +72,7 @@ function parse.expect(tokenKind, msg)
 	return token
 end
 
+-- Parses list of arguments / parameters for functions
 function parse.argList(n,onlyIdentifiers)
 	n = n or 0
 	local token = parse.showNext()
@@ -96,6 +100,7 @@ function parse.call()
 	parse.expect('rightpar')
 end
 
+
 local function auxExp()
 	--while util.in_table({'+','-','*','/','%'},(parse.showNext()).text) do
 	while (parse.showNext()).kind == 'operator' do
@@ -106,6 +111,8 @@ end
 
 function parse.expression()
 	print("Parsing Expression")
+
+
 	local token = parse.showNext()
 	if token.kind == 'number' then		-- NUMBER
 		parse.next() -- accept
@@ -119,9 +126,10 @@ function parse.expression()
 			auxExp()					-- NORMAL VAR ACCESS
 		end
 	end	
+	return ast.createNode('exp')
 end
 
-function parse.functionDeclaration(declaration_type) -- 1: var x = function(){}; 2: function x(){}
+function parse.functionDeclaration(declaration_type, parent) -- 1: var x = function(){}; 2: function x(){}
 	print("Parsing Function Declaration")
 	parse.expect('function')
 	if declaration_type == 2 then
@@ -131,31 +139,51 @@ function parse.functionDeclaration(declaration_type) -- 1: var x = function(){};
 	parse.argList()
 	parse.expect('rightpar')
 	parse.expect('leftcurly')
-	parse.stmt()
+	parse.stmt(parent)
 	parse.expect('rightcurly')
+end
+
+function parse._return()
+	print("Parsing Function Declaration")
+	parse.expect('return')
+	local node = ast.createNode('return')
+	ast.insertNode(node,parse.expression())
+	return node
 end
 
 function parse.declaration()
 	print("Parsing Declaration")
+	local node = ast.createNode('dcl')
+
 	parse.expect('var')				-- var x =
-	parse.expect('identifier')
+	local id = parse.expect('identifier')
+	ast.insertNode(node,ast.createNode(id.text))
+
 	parse.expect('equal')
+
 	local token = parse.showNext()
 	if token.kind == 'function' then -- FUNCTION DECLARATION TYPE 1
-		parse.functionDeclaration(1)
+		parse.functionDeclaration(1,ast.insertNode(node,ast.createNode('function1')))
 	else
-		parse.expression() -- NORMAL DECLARATION
+		ast.insertNode(node,parse.expression()) -- NORMAL DECLARATION
 	end
+	return node
 end
 
-function parse.stIf()
+function parse.stIf(parent)
 	print("Parsing If")
+
 	parse.expect('if')		-- if(exp){ stmt* }[else [stIf]* | {}]?
+	local thisNode =  ast.createNode('if')
+	local node = parent or thisNode
+
 	parse.expect('leftpar')
-	parse.expression()
+
+	ast.insertNode(node,parse.expression())
+
 	parse.expect('rightpar')
 	parse.expect('leftcurly')
-	parse.stmt()
+	parse.stmt(ast.insertNode(node,ast.createNode('block')))
 	parse.expect('rightcurly')
 
 	local token = parse.showNext()
@@ -163,68 +191,80 @@ function parse.stIf()
 		parse.next()
 		token = parse.showNext()
 		if token.kind == 'if' then
-			parse.stIf() -- will parse infinite else ifs :)
+			local elif = parse.stIf(node) -- will parse infinite else ifs :)
 		else
 			parse.expect('leftcurly')
-			parse.stmt()
+			parse.stmt(ast.insertNode(node,ast.createNode('block')))
 			parse.expect('rightcurly')
 		end
 	end
+	return node
 end
 
 
-function parse.assign()
+function parse.assign(var)
 	print("Parsing Assignment") -- x = exp or x++
-	
+	local node = ast.createNode('assign')
+	ast.insertNode(node,ast.createNode(var))
+
 	local token = parse.showNext()
 	if util.in_table({'=','+=','-=','*=','/=','%='},token.text) then 
 		parse.next()
-		parse.expression()
+		ast.insertNode(node,parse.expression())
 
 	elseif util.in_table({'++','--'},token.text) then
 		parse.next()
-
+		ast.insertNode(node,ast.createNode(token.text))
 	else
 		error("Parsing error on "..token.line..":"..token.char..". Expected operator, got "..token.kind)
 	end
+	return node
 end
 
 function parse._while()
 	print("Parsing While") 
+	
 	parse.expect('while')
+	local node = ast.createNode('while')
+
 	parse.expect('leftpar')
-	parse.expression()
+	ast.insertNode(node,parse.expression())
 	parse.expect('rightpar')
 	parse.expect('leftcurly')
-	parse.stmt()
+	parse.stmt(ast.insertNode(node,ast.createNode('block')))
 	parse.expect('rightcurly')
+
+	return node
 end
 
-function parse.stmt()
+function parse.stmt(parent)
+
 	print("Parsing Statement")
+	local node = ast.createNode('stmt')
 	local token = parse.showNext()
 	-- DECLARATION
 	if token.kind == 'var' then
-		parse.declaration()
+		node = parse.declaration()
 		parse.maybeExpect('semicolon')
 
 	-- IF
 	elseif token.kind == 'if' then
-		parse.stIf()
+		node = parse.stIf()
 		parse.maybeExpect('semicolon')
 
 	elseif token.kind == 'identifier' then
+		local var = token.text
 		parse.next() -- accept
-
 		token = parse.showNext()
 
 		-- FUNCTION CALL
 		if token.kind == 'leftpar' then
 			parse.call()
-			
+			node = ast.createNode('fcall')
+			ast.insertNode(node,ast.createNode(var))
 		-- ASSIGNMENT
 		else
-			parse.assign()
+			node = parse.assign(var)
 		end
 
 		parse.maybeExpect('semicolon')
@@ -236,7 +276,12 @@ function parse.stmt()
 
 	-- WHILE
 	elseif token.kind == 'while' then
-		parse._while()
+		node = parse._while()
+		parse.maybeExpect('semicolon')
+
+	-- RETURN
+	elseif token.kind == 'return' then
+		node = parse._return()
 		parse.maybeExpect('semicolon')
 
 	 -- TODO: for, etc
@@ -244,10 +289,14 @@ function parse.stmt()
 		error("Parsing error on "..token.line..":"..token.char..". Expected ?, got "..token.kind)
 	end
 
+	ast.insertNode(parent,node)
+
 	if parse.showNext() and (parse.showNext()).kind ~= 'rightcurly' then
-		parse.stmt()
+		parse.stmt(parent)
 	end
 end
 
-
+-- begin
 parse.stmt()
+
+ast.printTree()

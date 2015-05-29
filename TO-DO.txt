@@ -12,9 +12,10 @@ Optional semicolons
 numbers and strings sent as arguments
 fix end of if
 while
+Return
 
 DOING / NEXT
-
+AST
 
 
 TODO
