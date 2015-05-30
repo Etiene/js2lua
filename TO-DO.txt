@@ -13,19 +13,19 @@ numbers and strings sent as arguments
 fix end of if
 while
 Return
+AST
+Taking a second look at expressions complexity
+scope: error on call to non declared things
 
 DOING / NEXT
-AST
-
+bizarre js function declaration order / autofix of AST
 
 TODO
-Taking a second look at expressions complexity
 normal js functions
-
-scope: error on call to non declared things
-function declaration order
+parenthesis on expressions
+code generation
 
 BUGS
 
 Currently reading x = -2; as operator + number instead of negative number
-
+blank stmt blocks will show as "blank"

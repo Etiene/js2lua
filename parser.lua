@@ -129,13 +129,16 @@ function parse.expression(sibling)
 	elseif token.kind == 'identifier' then
 		parse.expect('identifier','Expression error. ') -- IDENTIFIER
 		local var = token.text
+		local line = token.line
 		local token = parse.showNext()
 		if token.kind == 'leftpar' then  -- FUNCTION CALL
-			node = ast.createNode('fcall')
+			node = ast.createNode('fcall',line)
 			ast.insertNode(node,ast.createNode(var))
 			parse.call()
 		else
-			node = ast.createNode(var)					-- NORMAL VAR ACCESS
+			local ref = ast.createNode('ref',line)
+			ast.insertNode(ref,var)	
+			node = ref				-- NORMAL VAR ACCESS
 		end
 		node = (((parse.showNext()).kind == 'operator') and parse.expression(node)) or node
 	end	
@@ -168,9 +171,8 @@ end
 
 function parse.declaration()
 	print("Parsing Declaration")
-	local node = ast.createNode('dcl')
-
-	parse.expect('var')				-- var x =
+	local token = parse.expect('var')				-- var x =
+	local node = ast.createNode('dcl',token.line)
 	local id = parse.expect('identifier')
 	ast.insertNode(node,ast.createNode(id.text))
 
@@ -268,7 +270,7 @@ function parse.stmt(parent)
 	
 	local token = parse.showNext()
 	if token then
-		local node = ast.createNode('blank')
+		local node = ast.createNode('[empty]')
 
 		-- DECLARATION
 		if token.kind == 'var' then
@@ -287,8 +289,8 @@ function parse.stmt(parent)
 
 			-- FUNCTION CALL
 			if token.kind == 'leftpar' then
+				node = ast.createNode('fcall',token.line)
 				parse.call()
-				node = ast.createNode('fcall')
 				ast.insertNode(node,ast.createNode(var))
 			-- ASSIGNMENT
 			else
@@ -299,7 +301,7 @@ function parse.stmt(parent)
 
 		-- FUNCTION DECLARATION TYPE 2 -> function x(){}
 		elseif token.kind == 'function' then
-			node = ast.createNode('dcl')
+			node = ast.createNode('dcl',token.line)
 			parse.functionDeclaration(2,ast.insertNode(node,'func2'))
 			parse.maybeExpect('semicolon')
 
@@ -328,6 +330,14 @@ end
 -- begin
 parse.stmt()
 
-ast.navigateTree(nil,nil,true)
+ast.navigateTree(nil,nil,true) -- run through the tree and insert symbols
+
+if next(ast.tree.errors) then
+	for _,e in pairs(ast.tree.errors) do
+		error(e.msg)
+	end
+end
+
+--ast.navigateTree(nil,nil,true,true) -- run through the tree again and verify symbols / make modifications in the tree
 
 

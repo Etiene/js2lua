@@ -1,6 +1,7 @@
 local M = {}
+local symbol = require 'symbol'
 
-M.tree = {name = "Program", children = {}}
+M.tree = {name = "block", children = {}, errors = {}}
 
 local currentNode = M.tree
 
@@ -11,7 +12,6 @@ local currentParent = {}
 function M.createNode(name, value)
 	local newNode = {name = name, value = value, children = {}, parent = {}} -- 
 	
-	--currentNode = newNode
 	return newNode
 end
 
@@ -42,15 +42,34 @@ function M.makeFamily(op, childrenOps)
 	end
 end
 
-function M.navigateTree(subtree, indent, show, map)
-	subtree =  subtree or M.tree
+function M.navigateTree(node, indent, show)
+	node =  node or M.tree
 	indent = indent or ""
-	if next(subtree.children) then
-		for _,node in pairs(subtree.children) do
-			if show then print(indent..node.name) end
-			M.navigateTree(node,indent.."--",show,map)
+
+	if not node then return end
+	
+	if node.name == 'block' then symbol.openScope() end
+	if node.name == 'dcl' then symbol.enterSymbol(node) end
+	if node.name == 'ref' or node.name == 'fcall' then
+		local sname = node.children[1].name
+		local found, scopeId = symbol.retrieveSymbol(sname)
+		if not found then
+			--print("INSERTING ERROR"..sname)
+			table.insert(M.tree.errors,{scopeId = scopeId, symbolName = sname, msg = "Unexpected use of undeclared variable "..sname.." on line "..node.value.."."})
 		end
 	end
+	if node.name == 'func2' then
+	end
+
+	if next(node.children) then
+		for _,n in pairs(node.children) do
+			if show then print(indent..n.name) end
+			
+			M.navigateTree(n,indent.."--",show)
+		end
+	end
+
+	if node.name == 'block' then symbol.closeScope() end
 end
 
 return M
