@@ -20,11 +20,15 @@ bizarre js function declaration order / autofix of AST
 
 
 DOING / NEXT
+function parameters and arguments on tree
+code generation
+
 
 TODO
-normal js functions
+null
 parenthesis on expressions
-code generation
+standard library js functions
+expressions with strings -> + = concatenation
 
 BUGS
 

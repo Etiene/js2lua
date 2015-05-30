@@ -4,7 +4,7 @@
 // scope
 
 
-x(2,4); //should ERROR
+//x(2,4); //should ERROR
 var x = function(a, b){
 	var a = 2;
 };
@@ -15,6 +15,6 @@ function y(a, b){
 	var a = 2;
 };
 
-var b = a; //should ERROR
+//var b = a; //should ERROR
 
 var c = 1 > 3; //should be OK

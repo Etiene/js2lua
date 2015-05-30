@@ -1,3 +1,9 @@
+--[[
+ Parser for Javascript source code.
+ 
+ Author: Etiene Dalcol, Eric Mourre and Gurvan Le Bleis
+]]
+
 local parse = {}
 
 require 'lxsh'
@@ -176,6 +182,9 @@ function parse.declaration()
 	local id = parse.expect('identifier')
 	ast.insertNode(node,ast.createNode(id.text))
 
+	token = parse.showNext()
+	if token.kind == 'semicolon' then return node end
+
 	parse.expect('equal')
 
 	local token = parse.showNext()
@@ -330,18 +339,15 @@ end
 -- begin
 parse.stmt()
 
-ast.navigateTree(nil,nil,false) -- run through the tree and insert symbols
+ast.navigateTree(nil,nil,false) -- run through the tree and inserts symbols / recovers from error 
+ast.navigateTree(nil,nil,true) -- run through the tree again just to show modified tree.
 
-
-ast.navigateTree(nil,nil,true) -- run through the tree and insert symbols
-
-
+-- Semantic error (undeclared things)
 if next(ast.tree.errors) then
 	for _,e in pairs(ast.tree.errors) do
 		error(e.msg)
 	end
 end
 
---ast.navigateTree(nil,nil,true,true) -- run through the tree again and verify symbols / make modifications in the tree
 
 

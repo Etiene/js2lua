@@ -7,14 +7,16 @@
 
 //x = y;
 
-y();
-function y(){
+y(a);
+function y(a,b){
 
 }
 
 var x = 1;
 
-//a();
+var b;
+
+//a(); //this errors properly
 //var a = function(){
 //
 //}

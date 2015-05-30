@@ -3,7 +3,7 @@ function y(){
 	x++;
 }
 
-x = 5;
+var x = 5;
 
 x = 2 * 5 + 3; 
 
