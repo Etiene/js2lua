@@ -1,5 +1,5 @@
 local M = {}
-local symbol = require 'symbol'
+local symbol = require 'src.symbol'
 
 M.tree = {name = "block", children = {}, errors = {}}
 

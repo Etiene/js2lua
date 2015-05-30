@@ -7,28 +7,23 @@
 local parse = {}
 
 require 'lxsh'
-local js = require 'js_lexer'
-local util = require 'util'
-local ast = require 'ast'
-
-local file = io.open(arg[1],"r")
-local src = file:read("*a")
-print(src)
-io.close(file)
+local util = require 'src.util'
+local ast = require 'src.ast'
+local js = require 'src.js_lexer'
 
 local cursor = 0
 local current
-
 local gen_table = {}
 
 -- Gets the scan results, removes comments and white spaces and adds the token in a stream
-for kind, text, lnum, cnum in js.gmatch(src) do
-	print(string.format('%s: %q (%i:%i)', kind, text, lnum, cnum))
-	if kind ~= 'comment' and kind ~= 'whitespace' then
-		table.insert(gen_table,{kind = kind, text = text, line = lnum, char = cnum})
+function parse.scan(src)
+	for kind, text, lnum, cnum in js.gmatch(src) do
+		print(string.format('%s: %q (%i:%i)', kind, text, lnum, cnum))
+		if kind ~= 'comment' and kind ~= 'whitespace' then
+			table.insert(gen_table,{kind = kind, text = text, line = lnum, char = cnum})
+		end
 	end
 end
-
 
 -- Advance in the stream
 function parse.next()
@@ -345,17 +340,11 @@ function parse.stmt(parent)
 end
 
 -- begin
-parse.stmt()
-
-ast.navigateTree(nil,nil,false) -- run through the tree and inserts symbols / recovers from error 
-ast.navigateTree(nil,nil,true) -- run through the tree again just to show modified tree.
-
--- Semantic error (undeclared things)
-if next(ast.tree.errors) then
-	for _,e in pairs(ast.tree.errors) do
-		error(e.msg)
-	end
+function parse.parse(src)
+	parse.scan(src)
+	parse.stmt()
+	return ast
 end
 
-
+return parse
 
