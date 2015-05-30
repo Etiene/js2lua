@@ -26,6 +26,7 @@ function M.enterSymbol(node)
 		stype = symbol
 		symbol = (node.children[1]).children[1].name
 	end
+	node.scopeId = currentScope.id
 	table.insert(currentScope.symbols,{symbol = symbol, stype = stype})
 
 	--print ("ENTER SYMBOL"..stype..symbol)
@@ -45,7 +46,11 @@ function M.retrieveSymbol(symbol)
 		end
 		scopeCursor = scopeCursor.outerScope
 	end
-	return found
+	return found, currentScope.id
+end
+
+function M.getCurrentScopeId()
+	return currentScope.id
 end
 
 return M

@@ -330,7 +330,11 @@ end
 -- begin
 parse.stmt()
 
+ast.navigateTree(nil,nil,false) -- run through the tree and insert symbols
+
+
 ast.navigateTree(nil,nil,true) -- run through the tree and insert symbols
+
 
 if next(ast.tree.errors) then
 	for _,e in pairs(ast.tree.errors) do

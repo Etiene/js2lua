@@ -16,9 +16,10 @@ Return
 AST
 Taking a second look at expressions complexity
 scope: error on call to non declared things
+bizarre js function declaration order / autofix of AST
+
 
 DOING / NEXT
-bizarre js function declaration order / autofix of AST
 
 TODO
 normal js functions
