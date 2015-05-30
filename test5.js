@@ -35,3 +35,4 @@ var z = function(hello,goodbye){
 
 z();
 
+x+=5;

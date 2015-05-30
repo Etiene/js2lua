@@ -17,6 +17,9 @@ end
 
 function M.insertNode(parent, node)
 	parent = parent or M.tree
+	if type(node)~= 'table' then
+		node = M.createNode(node)
+	end
 	node.parent = parent
 	table.insert(parent.children,node)
 	return node
@@ -39,13 +42,13 @@ function M.makeFamily(op, childrenOps)
 	end
 end
 
-function M.printTree(subtree, indent)
+function M.navigateTree(subtree, indent, show, map)
 	subtree =  subtree or M.tree
 	indent = indent or ""
 	if next(subtree.children) then
 		for _,node in pairs(subtree.children) do
-			print(indent..node.name)
-			M.printTree(node,indent.."--")
+			if show then print(indent..node.name) end
+			M.navigateTree(node,indent.."--",show,map)
 		end
 	end
 end
