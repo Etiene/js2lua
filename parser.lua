@@ -79,30 +79,38 @@ function parse.expect(tokenKind, msg, noAdvance)
 end
 
 -- Parses list of arguments / parameters for functions
-function parse.argList(n,onlyIdentifiers)
+function parse.argList(n,onlyIdentifiers,parent)
 	n = n or 0
 	local token = parse.showNext()
 	if token.kind ~= 'rightpar' then
 		n = n + 1
 		if onlyIdentifiers then
+			ast.insertNode(parent,token.text)
 			parse.expect('identifier')
 		else
+			if token.kind == 'identifier' then
+				local node = ast.createNode('ref',token.line)
+				ast.insertNode(node,token.text)
+				ast.insertNode(parent,node)
+			else 
+				ast.insertNode(parent,token.text)
+			end
 			parse.expect({'identifier','number','string'})
 		end
 
 		token = parse.showNext()
 		if token.kind == 'coma' then
 			parse.next() -- accept
-			parse.argList(n+1,onlyIdentifiers)
+			parse.argList(n+1,onlyIdentifiers,parent)
 		end
 	end
 	return n
 end
 
-function parse.call()
+function parse.call(node)
 	print('Parsing Function Call')
 	parse.expect('leftpar')
-	parse.argList()
+	parse.argList(nil,nil,node)
 	parse.expect('rightpar')
 end
 
@@ -140,7 +148,7 @@ function parse.expression(sibling)
 		if token.kind == 'leftpar' then  -- FUNCTION CALL
 			node = ast.createNode('fcall',line)
 			ast.insertNode(node,ast.createNode(var))
-			parse.call()
+			parse.call(ast.insertNode(node,'argList'))
 		else
 			local ref = ast.createNode('ref',line)
 			ast.insertNode(ref,var)	
@@ -159,7 +167,7 @@ function parse.functionDeclaration(declaration_type, parent) -- 1: var x = funct
 		ast.insertNode(parent,token.text)
 	end
 	parse.expect('leftpar')
-	parse.argList()
+	parse.argList(nil,true,ast.insertNode(parent,'parmList'))
 	parse.expect('rightpar')
 	parse.expect('leftcurly')
 	--ast.insertNode(parent,'block')
@@ -299,8 +307,8 @@ function parse.stmt(parent)
 			-- FUNCTION CALL
 			if token.kind == 'leftpar' then
 				node = ast.createNode('fcall',token.line)
-				parse.call()
 				ast.insertNode(node,ast.createNode(var))
+				parse.call(ast.insertNode(node,'argList'))
 			-- ASSIGNMENT
 			else
 				node = parse.assign(var)

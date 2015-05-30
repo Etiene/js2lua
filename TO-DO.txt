@@ -17,18 +17,19 @@ AST
 Taking a second look at expressions complexity
 scope: error on call to non declared things
 bizarre js function declaration order / autofix of AST
-
+function parameters and arguments on tree
 
 DOING / NEXT
-function parameters and arguments on tree
+
 code generation
 
 
 TODO
 null
 parenthesis on expressions
-standard library js functions
+standard library js functions, like console.log
 expressions with strings -> + = concatenation
+handle global vars better
 
 BUGS
 
