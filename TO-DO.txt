@@ -30,6 +30,7 @@ parenthesis on expressions
 standard library js functions, like console.log
 expressions with strings -> + = concatenation
 handle global vars better
+fcal on arg list
 
 BUGS
 

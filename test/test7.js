@@ -6,7 +6,11 @@
 //}
 
 //x = y;
-var a = 2;
+var j = function(){
+
+}
+var g;
+var a = 2 + 3 + 7;
 y(a,"test",5); //in both js and lua there's no problems on mismatch of numbers of func arguments
 function y(a,b){
 

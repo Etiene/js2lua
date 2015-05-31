@@ -1,5 +1,6 @@
 require 'lxsh'
 local parser = require "src.parser"
+local generate = require "src.generator"
 
 local file = io.open(arg[1],"r")
 local src = file:read("*a")
@@ -17,3 +18,7 @@ if next(ast.tree.errors) then
 		error(e.msg)
 	end
 end
+
+local new_src = generate.code(ast.tree,true)
+
+print(new_src)

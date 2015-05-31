@@ -21,6 +21,7 @@ end
 
 function M.enterSymbol(node)
 	local stype = "var"
+	print(node.name)
 	local symbol = node.children[1].name
 	if symbol == 'func1' or symbol == 'func2' then
 		stype = symbol
@@ -44,7 +45,7 @@ function M.retrieveSymbol(symbol)
 				end
 			end
 		end
-		scopeCursor = scopeCursor.outerScope
+		scopeCursor = scopeCursor.outerScope -- search in upvalues
 	end
 	return found, currentScope.id
 end

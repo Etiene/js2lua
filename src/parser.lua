@@ -183,17 +183,25 @@ function parse.declaration()
 	local token = parse.expect('var')				-- var x =
 	local node = ast.createNode('dcl',token.line)
 	local id = parse.expect('identifier')
-	ast.insertNode(node,ast.createNode(id.text))
+	local idNode = ast.createNode(id.text)
 
 	token = parse.showNext()
-	if token.kind == 'semicolon' then return node end
+	if token.kind == 'semicolon' then 
+		ast.insertNode(node,idNode)
+		return node 
+	end
 
 	parse.expect('equal')
 
 	local token = parse.showNext()
 	if token.kind == 'function' then -- FUNCTION DECLARATION TYPE 1
-		parse.functionDeclaration(1,ast.insertNode(node,'func1'))
+		local funcNode = ast.createNode('func1')
+		
+		ast.insertNode(funcNode,idNode)
+		ast.insertNode(node,funcNode)
+		parse.functionDeclaration(1,funcNode)
 	else
+		ast.insertNode(node,idNode)
 		ast.insertNode(node,parse.expression()) -- NORMAL DECLARATION
 	end
 	return node
@@ -339,10 +347,9 @@ function parse.stmt(parent)
 	end
 end
 
--- begin
 function parse.parse(src)
 	parse.scan(src)
-	parse.stmt()
+	parse.stmt() --begin recursing LL(1)
 	return ast
 end
 
