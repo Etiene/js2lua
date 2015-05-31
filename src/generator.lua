@@ -7,6 +7,7 @@ function M.exp(node)
 	if node.name == 'ref' or node.name == 'fcall' then
 		node.children[1].visited = 1
 		str = node.children[1].name
+		if node.name == 'fcall' then str = str.."( )" end
 
 	elseif next(node.children) then
 		local leftChild = M.exp(node.children[1])
@@ -106,6 +107,17 @@ function M._if(node)
 	return str.."end\n"
 end
 
+function M._while(node)
+	node.visited = 1
+	node.children[2].visited = 1
+	return "while "..M.exp(node.children[1]).." do\n"..M.code(node.children[2]).."end\n"
+end
+
+function M._return(node)
+	node.visited = 1
+	return "return "..M.exp(node.children[1]).."\n"
+end
+
 function M.code(node)
 	local src = src or ""
 	if node then
@@ -114,6 +126,8 @@ function M.code(node)
 		if node.name == 'fcall' then src = src..M.fcall(node)..'\n' end
 		if node.name == 'assign' then src = src..M.assign(node) end
 		if node.name == 'if' then src = src..M._if(node) end
+		if node.name == 'while' then src = src..M._while(node) end
+		if node.name == 'return' then src = src..M._return(node) end
 
 		if next(node.children) then
 			for _,n in pairs(node.children) do

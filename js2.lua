@@ -21,4 +21,7 @@ end
 
 local new_src = generate.code(ast.tree,true)
 
-print(new_src)
+--print(new_src)
+file = io.open("out.lua","w")
+file:write(new_src)
+io.close(file)
