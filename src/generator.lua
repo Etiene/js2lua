@@ -4,13 +4,12 @@ local src = ""
 function M.exp(node)
 	node.visited = 1
 	local str = ""
-	if node.name == 'ref' and node.name == 'fcall' then
+	if node.name == 'ref' or node.name == 'fcall' then
 		node.children[1].visited = 1
 		str = node.children[1].name
 
 	elseif next(node.children) then
-		local leftChild = node.children[1].name
-		node.children[1].visited = 1
+		local leftChild = M.exp(node.children[1])
 		local rightChild = M.exp(node.children[2])
 		str = str.. leftChild.." "..node.name.." "..rightChild 
 	else
@@ -37,6 +36,7 @@ function M.func(node)
 	end
 	str = str..table.concat(parms," , ").." )\n"
 
+	node.children[3].visited = 1
 	str = str..M.code(node.children[3])
 
 	return str.."end\n"
@@ -77,11 +77,43 @@ function M.fcall(node)
 	return str..table.concat(args," , ").." )"
 end
 
+function M.assign(node)
+	node.visited = 1
+	node.children[1].visited = 1
+	return node.children[1].name.." = "..M.exp(node.children[2])..'\n'
+end
+
+function M._if(node)
+	node.visited = 1
+	local str = "if "..M.exp(node.children[1]).." then\n"
+
+	node.children[2].visited = 1
+	str = str..M.code(node.children[2])
+
+	local cursor = 3
+	--search elifs
+	while cursor + 1 <= #node.children do
+		node.children[cursor].visited = 1
+		str = str.."elseif "..M.exp(node.children[cursor]).." then\n"
+		node.children[cursor+1].visited = 1
+		str = str..M.code(node.children[cursor+1])
+		cursor = cursor + 2
+	end
+	if cursor <= #node.children then
+		node.children[cursor].visited = 1
+		str = str.."else\n"..M.code(node.children[cursor])
+	end
+	return str.."end\n"
+end
+
 function M.code(node)
 	local src = src or ""
 	if node then
+
 		if node.name == 'dcl' then src = src..M.dcl(node) end
 		if node.name == 'fcall' then src = src..M.fcall(node)..'\n' end
+		if node.name == 'assign' then src = src..M.assign(node) end
+		if node.name == 'if' then src = src..M._if(node) end
 
 		if next(node.children) then
 			for _,n in pairs(node.children) do

@@ -7,7 +7,11 @@
 
 //x = y;
 var j = function(){
-
+	var x = 2;
+	var z = function(u,key){
+		
+	}
+	x += 5;
 }
 var g;
 var a = 2 + 3 + 7;
@@ -17,6 +21,8 @@ function y(a,b){
 }
 
 var x = 1; 
+
+x = x + 1;
 
 //a(); //this errors properly
 //var a = function(){
