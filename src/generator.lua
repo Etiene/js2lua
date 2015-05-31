@@ -72,7 +72,7 @@ function M.fcall(node)
 		else
 			arg = n.name
 		end
-		table.insert(args,name)
+		table.insert(args,arg)
 	end
 	return str..table.concat(args," , ").." )"
 end
